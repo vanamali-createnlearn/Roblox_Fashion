@@ -1,0 +1,17 @@
+--Place this as ModuleScript in Replicated Storage and name it "AnimationConfig" name is very important
+--Add a Remote Event called "PlayAnimation" in replicated storage
+--Paste the following code in "AnimationConfig"
+--here animation ids can be replaced by student's own asset ids. I have added placeholder ids that pertain to Wave, Cheer, and Dance.
+
+local AnimationConfig = {}
+
+AnimationConfig.Animations = {
+	Anim1 = "rbxassetid://507770239", -- Wave
+	Anim2 = "rbxassetid://507770677", -- Cheer
+	Anim3 = "rbxassetid://507771019", -- Dance1
+}
+
+return AnimationConfig
+
+
+
