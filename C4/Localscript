@@ -1,0 +1,22 @@
+--Create a screengui with three TextButtons. Name them AnimButton1, AnimButton2, AnimButton3. 
+--This is a simple script that triggers the serverscript whenever each certain button is clicked
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local playAnimEvent = ReplicatedStorage:WaitForChild("PlayAnimation")
+
+local button1 = script.Parent:WaitForChild("AnimButton1")
+local button2 = script.Parent:WaitForChild("AnimButton2")
+local button3 = script.Parent:WaitForChild("AnimButton3")
+
+button1.MouseButton1Click:Connect(function()
+	playAnimEvent:FireServer("Anim1")
+end)
+
+button2.MouseButton1Click:Connect(function()
+	playAnimEvent:FireServer("Anim2")
+end)
+
+button3.MouseButton1Click:Connect(function()
+	playAnimEvent:FireServer("Anim3")
+end)
