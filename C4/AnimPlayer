@@ -1,0 +1,31 @@
+--Place this file in ServerScriptService. This file will take animation assets you put in the modulescript and play them
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local playAnimEvent = ReplicatedStorage:WaitForChild("PlayAnimation")
+local AnimationConfig = require(ReplicatedStorage:WaitForChild("AnimationConfig"))
+
+playAnimEvent.OnServerEvent:Connect(function(player, animKey)
+	local character = player.Character
+	if character then
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			local animId = AnimationConfig.Animations[animKey]
+			if animId then
+				local animation = Instance.new("Animation")
+				animation.AnimationId = animId
+
+				local track = humanoid:LoadAnimation(animation)
+				track:Play()
+
+				-- Stop after 3 seconds
+				task.delay(3, function()
+					if track.IsPlaying then
+						track:Stop()
+					end
+				end)
+			else
+				warn("Invalid animation key:", animKey)
+			end
+		end
+	end
+end)
