@@ -1,0 +1,82 @@
+--Create a ScreenGui named HairGui
+--Add a frame under it, and under the frame add the following
+--1. TextButtons named NextButton, PreviousButton, WearitButton, CloseButton
+--2. ImageLabels named ClothingThumbnail and PlayerThumbnail
+--3. Two TextLabels one called PlayerWelcome and the other let the name be unchanged
+
+--NextButton & PreviousButton are used to cycle between clothing you put in the Modulescript
+--WearitButton & CloseButton are used to trigger the serverscript to equip the current clothing and close the gui respectively
+--ClothingThumbnail and PlayerThumbnail are used to show the appearance of current clothing item and player respectively
+--TextLabel is used to tell the player which selection gui it is for eg, Hair/Pants/Shirts and PlayerWelcome is used to display a custom welcome player name message
+
+--Copy the following code and paste it in StarterPlayerScripts
+
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HairData = require(ReplicatedStorage:WaitForChild("HairData"))
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local gui = playerGui:WaitForChild("HairGui") -- Update "HairGui" to your actual GUI name
+local frame = gui:WaitForChild("Frame")
+
+local previousButton = frame:WaitForChild("PreviousButton")
+local nextButton = frame:WaitForChild("NextButton")
+local closeButton = frame:WaitForChild("CloseButton")
+local wearButton = frame:WaitForChild("WearitButton")
+local clothingThumbnail = frame:WaitForChild("ClothingThumbnail")
+local playerThumbnail = frame:WaitForChild("PlayerThumbnail")
+local welcomeLabel = frame:WaitForChild("PlayerWelcome")
+
+-- Proximity Prompt
+local hairZone = workspace:WaitForChild("HairZone")
+local prompt = hairZone:WaitForChild("ProximityPrompt")
+
+local currentIndex = 1
+
+-- Setup welcome
+welcomeLabel.Text = "Welcome " .. player.Name .. "!"
+local thumbType = Enum.ThumbnailType.AvatarBust
+local thumbSize = Enum.ThumbnailSize.Size180x180
+local content, isReady = Players:GetUserThumbnailAsync(player.UserId, thumbType, thumbSize)
+playerThumbnail.Image = content
+
+local function updatePreview()
+	local assetId = HairData[currentIndex].id
+	clothingThumbnail.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. assetId .. "&width=420&height=420&format=png"
+end
+
+-- Open GUI on prompt trigger
+prompt.Triggered:Connect(function(triggeringPlayer)
+	if triggeringPlayer == player then
+		gui.Enabled = true
+		updatePreview()
+	end
+end)
+
+-- Nav buttons
+nextButton.MouseButton1Click:Connect(function()
+	currentIndex = currentIndex % #HairData + 1
+	updatePreview()
+end)
+
+previousButton.MouseButton1Click:Connect(function()
+	currentIndex = (currentIndex - 2) % #HairData + 1
+	updatePreview()
+end)
+
+-- Wear Hair
+wearButton.MouseButton1Click:Connect(function()
+	local selected = HairData[currentIndex]
+	print("firing remote event for hair")
+	ReplicatedStorage:WaitForChild("EquipClothingEvent"):FireServer("Hair", selected.assetId)
+end)
+
+-- Close
+closeButton.MouseButton1Click:Connect(function()
+	gui.Enabled = false
+end)
+
+-- Init
+updatePreview()
