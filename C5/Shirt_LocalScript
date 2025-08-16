@@ -1,4 +1,4 @@
---Create a ScreenGui named HairGui
+--Create a ScreenGui named ShirtGui
 --Add a frame under it, and under the frame add the following
 --1. TextButtons named NextButton, PreviousButton, WearitButton, CloseButton
 --2. ImageLabels named ClothingThumbnail and PlayerThumbnail
