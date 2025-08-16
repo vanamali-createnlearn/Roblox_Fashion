@@ -1,0 +1,92 @@
+--Create a ScreenGui named HairGui
+--Add a frame under it, and under the frame add the following
+--1. TextButtons named NextButton, PreviousButton, WearitButton, CloseButton
+--2. ImageLabels named ClothingThumbnail and PlayerThumbnail
+--3. Two TextLabels one called PlayerWelcome and the other let the name be unchanged
+
+--NextButton & PreviousButton are used to cycle between clothing you put in the Modulescript
+--WearitButton & CloseButton are used to trigger the serverscript to equip the current clothing and close the gui respectively
+--ClothingThumbnail and PlayerThumbnail are used to show the appearance of current clothing item and player respectively
+--TextLabel is used to tell the player which selection gui it is for eg, Hair/Pants/Shirts and PlayerWelcome is used to display a custom welcome player name message
+
+--Copy the following code and paste it in StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+
+-- Import shirt list
+local ShirtData = require(ReplicatedStorage:WaitForChild("ShirtData"))
+
+-- UI References
+local gui = player:WaitForChild("PlayerGui"):WaitForChild("ShirtGui")
+local frame = gui:WaitForChild("Frame")
+local previousButton = frame:WaitForChild("PreviousButton")
+local nextButton = frame:WaitForChild("NextButton")
+local closeButton = frame:WaitForChild("CloseButton")
+local wearButton = frame:WaitForChild("WearitButton")
+local clothingThumbnail = frame:WaitForChild("ClothingThumbnail")
+local playerThumbnail = frame:WaitForChild("PlayerThumbnail")
+local welcomeLabel = frame:WaitForChild("PlayerWelcome")
+
+-- Proximity Prompt References
+local shirtZone = workspace:WaitForChild("ShirtZone")
+local proximityPrompt = shirtZone:WaitForChild("ProximityPrompt")
+
+local currentIndex = 1
+
+-- Setup welcome message
+welcomeLabel.Text = "Welcome " .. player.Name .. "!"
+
+-- Load player avatar thumbnail
+local thumbType = Enum.ThumbnailType.AvatarBust
+local thumbSize = Enum.ThumbnailSize.Size180x180
+local content, isReady = Players:GetUserThumbnailAsync(player.UserId, thumbType, thumbSize)
+playerThumbnail.Image = content
+
+-- Function to update the clothing preview
+local function updateClothingPreview()
+	local assetId = ShirtData[currentIndex].id
+	clothingThumbnail.Image = "https://www.roblox.com/asset-thumbnail/image?assetId=" .. assetId .. "&width=420&height=420&format=png"
+end
+
+-- Proximity Prompt triggered logic
+proximityPrompt.Triggered:Connect(function(triggeredPlayer)
+	if triggeredPlayer == player then
+		gui.Enabled = true
+		updateClothingPreview()
+	end
+end)
+
+-- Navigation logic
+nextButton.MouseButton1Click:Connect(function()
+	currentIndex += 1
+	if currentIndex > #ShirtData then
+		currentIndex = 1
+	end
+	updateClothingPreview()
+end)
+
+previousButton.MouseButton1Click:Connect(function()
+	currentIndex -= 1
+	if currentIndex < 1 then
+		currentIndex = #ShirtData
+	end
+	updateClothingPreview()
+end)
+
+-- Wear button logic
+wearButton.MouseButton1Click:Connect(function()
+	local selected = ShirtData[currentIndex]
+	print("Firing RemoteEvent for shirt catalog asset ID: " .. selected.id)
+	ReplicatedStorage:WaitForChild("EquipClothingEvent"):FireServer("Shirt", selected.template)
+end)
+
+-- Close GUI
+closeButton.MouseButton1Click:Connect(function()
+	gui.Enabled = false
+end)
+
+-- Initial setup
+updateClothingPreview()
+
