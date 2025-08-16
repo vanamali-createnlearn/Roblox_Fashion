@@ -1,0 +1,124 @@
+--Create a RemoteEvent called "EquipClothingEvent" in ReplicatedStorage
+--Create a new script in ServerScriptService name can be anything
+
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local event = ReplicatedStorage:WaitForChild("EquipClothingEvent")
+
+event.OnServerEvent:Connect(function(player, clothingType, assetId)
+	local character = player.Character
+	if not character then return end
+
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	-- Ensure that BodyColors are applied properly before changing clothing
+	local bodyColors = character:FindFirstChild("BodyColors")
+	if not bodyColors then
+		-- Create BodyColors if it doesn't exist
+		bodyColors = Instance.new("BodyColors")
+		bodyColors.Parent = character
+	end
+
+	-- Ensure the BodyColors are set to default (white) for all body parts
+	bodyColors.HeadColor = bodyColors.HeadColor or Color3.fromRGB(255, 255, 255)
+	bodyColors.TorsoColor = bodyColors.TorsoColor or Color3.fromRGB(255, 255, 255)
+	bodyColors.LeftLegColor = bodyColors.LeftLegColor or Color3.fromRGB(255, 255, 255)
+	bodyColors.RightLegColor = bodyColors.RightLegColor or Color3.fromRGB(255, 255, 255)
+	bodyColors.LeftArmColor = bodyColors.LeftArmColor or Color3.fromRGB(255, 255, 255)
+	bodyColors.RightArmColor = bodyColors.RightArmColor or Color3.fromRGB(255, 255, 255)
+
+	-- Use current applied description to prevent resetting clothing and body parts
+	local description = humanoid:GetAppliedDescription()
+
+	-- Clean and ensure the assetId is in the correct numeric format
+	local idString = tostring(assetId)
+	local cleanedId = idString:match("%d+$")
+	local numericId = tonumber(cleanedId)
+	if not numericId then
+		warn("Invalid assetId:", assetId)
+		return
+	end
+
+	-- Apply the clothing to the HumanoidDescription based on clothingType
+	if clothingType == "Pants" then
+		description.Pants = numericId
+	elseif clothingType == "Shirt" then
+		description.Shirt = numericId
+	elseif clothingType == "Hair" then
+		-- Remove any existing hair accessory
+		for _, accessory in ipairs(character:GetChildren()) do
+			if accessory:IsA("Accessory") and accessory.Name == "Hair" then
+				accessory:Destroy()
+			end
+		end
+
+		-- Load the hair asset
+		local success, model = pcall(function()
+			return game:GetService("InsertService"):LoadAsset(assetId)
+		end)
+
+		if success and model then
+			-- Find the accessory from the loaded asset
+			local accessory = model:FindFirstChildWhichIsA("Accessory")
+			if accessory then
+				-- Debugging: Check the name of the accessory loaded
+				print("Loaded accessory:", accessory.Name)
+
+				accessory.Name = "Hair"
+				-- Make sure the accessory is added to the humanoid
+				humanoid:AddAccessory(accessory)
+
+				-- Ensure it's parented to the character and is correctly attached
+				accessory.Parent = character
+
+				-- Attach the accessory to the head of the character
+				local head = character:FindFirstChild("Head")
+				if head then
+					local attachment = head:FindFirstChild("Attachment")
+					if not attachment then
+						-- Create an attachment if there is none on the head
+						attachment = Instance.new("Attachment")
+						attachment.Parent = head
+					end
+
+					-- If the accessory doesn't already have an attachment, create one
+					if not accessory:FindFirstChild("Attachment") then
+						local hairAttachment = Instance.new("Attachment")
+						hairAttachment.Parent = accessory
+					end
+
+					-- Attach the accessory to the head using the attachment
+					accessory.Attachment.CFrame = attachment.CFrame
+					print("Hair attached to the head.")
+				else
+					warn("Head not found on character!")
+				end
+			else
+				warn("No accessory found in hair asset:", assetId)
+			end
+		else
+			warn("Failed to load hair asset:", assetId)
+		end
+	else
+		warn("Unsupported clothing type:", clothingType)
+		return
+	end
+
+	-- Apply the updated HumanoidDescription to the character
+	humanoid:ApplyDescriptionReset(description)
+
+	-- Ensure the face texture is updated as well, to prevent it from turning black
+	local head = character:FindFirstChild("Head")
+	if head then
+		-- Reset the face texture (make sure the texture is valid)
+		local face = head:FindFirstChild("face")
+		if face then
+			face.Texture = "rbxasset://textures/face.png" -- Update to your actual texture ID if required
+		end
+	end
+
+	-- Safeguard: Refresh the character to prevent any visual issues
+	character:WaitForChild("Humanoid"):MoveTo(character.PrimaryPart.Position)
+end)
